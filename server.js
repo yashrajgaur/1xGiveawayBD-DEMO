@@ -24,7 +24,7 @@ function initCoins() {
         coin.classList.add('coin-floating');
         
         const imgName = coinImages[Math.floor(Math.random() * coinImages.length)];
-        coin.src = encodeURIComponent(imgName); 
+        coin.src = encodeURIComponent(imgName); // Ensure proper encoding
         coin.alt = "Bonus Coin";
         
         const size = Math.random() * 100 + 80; 
@@ -48,7 +48,6 @@ function initCoins() {
 window.onload = function() {
     initCoins();
     initScratchCard();
-    playWelcomeVoice(); // Calls the Bangla voice function
 };
 
 // --- 3. SCRATCH CARD LOGIC ---
@@ -61,17 +60,21 @@ function initScratchCard() {
     let isDrawing = false;
     let revealed = false;
 
+    // Check if already revealed in previous session
     if (localStorage.getItem('bonusRevealed') === 'true') {
         canvas.style.display = 'none';
-        triggerSuccessEffects(false); 
+        triggerSuccessEffects(false); // Trigger toast but no fireworks if returning
         return;
     }
 
+    // Set canvas size to match container
     canvas.width = container.offsetWidth;
     canvas.height = container.offsetHeight;
 
-    ctx.fillStyle = "#C0C0C0"; 
+    // Create the "Scratch" Cover
+    ctx.fillStyle = "#C0C0C0"; // Fallback silver
     
+    // Create a Gradient for the scratch surface
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     gradient.addColorStop(0, '#9E9E9E');
     gradient.addColorStop(0.5, '#E0E0E0');
@@ -79,16 +82,19 @@ function initScratchCard() {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Add Text "SCRATCH HERE"
     ctx.font = "bold 20px Montserrat";
     ctx.fillStyle = "#555";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("SCRATCH ME", canvas.width/2, canvas.height/2);
 
+    // Scratch Settings
     ctx.lineWidth = 30;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
+    // Helper to get coordinates
     const getPos = (e) => {
         const rect = canvas.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -101,7 +107,7 @@ function initScratchCard() {
 
     const scratch = (e) => {
         if (!isDrawing || revealed) return;
-        e.preventDefault(); 
+        e.preventDefault(); // Prevent scrolling on mobile
 
         const pos = getPos(e);
         ctx.globalCompositeOperation = 'destination-out';
@@ -112,18 +118,22 @@ function initScratchCard() {
         checkRevealProgress();
     };
 
+    // Events for Mouse
     canvas.addEventListener('mousedown', (e) => { isDrawing = true; scratch(e); });
     canvas.addEventListener('mousemove', scratch);
     canvas.addEventListener('mouseup', () => { isDrawing = false; });
     canvas.addEventListener('mouseleave', () => { isDrawing = false; });
 
+    // Events for Touch
     canvas.addEventListener('touchstart', (e) => { isDrawing = true; scratch(e); });
     canvas.addEventListener('touchmove', scratch);
     canvas.addEventListener('touchend', () => { isDrawing = false; });
 
+    // Calculate how much has been scratched
     const checkRevealProgress = () => {
         if (revealed) return;
         
+        // Sample every 10th pixel for performance
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
         let transparentPixels = 0;
@@ -137,13 +147,14 @@ function initScratchCard() {
         const totalPixels = data.length / (4 * 10);
         const percentage = (transparentPixels / totalPixels) * 100;
 
-        if (percentage > 40) { 
+        if (percentage > 40) { // If 40% revealed, clear the rest
             finishScratch();
         }
     };
 
     const finishScratch = () => {
         revealed = true;
+        // Fade out canvas
         canvas.style.transition = 'opacity 0.5s';
         canvas.style.opacity = '0';
         setTimeout(() => { canvas.style.display = 'none'; }, 500);
@@ -211,6 +222,7 @@ function createFirework(element) {
     if(!element) return;
     
     const rect = element.getBoundingClientRect();
+    // Center of the scratch area
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     const colors = ['#ffcc00', '#ffffff', '#ffd700', '#ff4500', '#00ff00'];
@@ -238,35 +250,4 @@ function createFirework(element) {
         document.body.appendChild(particle);
         setTimeout(() => particle.remove(), 1000);
     }
-}
-
-// --- 7. WELCOME VOICE EFFECT (BANGLA) ---
-function playWelcomeVoice() {
-    // "One X Giveaway Bangladesh-e apnake swagatom"
-    const text = ""; 
-    
-    const speak = () => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'bn-BD'; // Sets language to Bangla (Bangladesh)
-        utterance.volume = 1;
-        utterance.rate = 1;
-        utterance.pitch = 1;
-        window.speechSynthesis.speak(utterance);
-    };
-
-    // Attempt to play immediately on load
-    speak();
-
-    // FAILSAFE: If browser blocks auto-play, play on first click/touch
-    const playOnInteraction = () => {
-        if (!window.speechSynthesis.speaking) {
-            speak();
-        }
-        document.removeEventListener('click', playOnInteraction);
-        document.removeEventListener('touchstart', playOnInteraction);
-    };
-
-    document.addEventListener('click', playOnInteraction);
-    document.addEventListener('touchstart', playOnInteraction);
-
 }
