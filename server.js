@@ -243,7 +243,7 @@ function createFirework(element) {
 // --- 7. WELCOME VOICE EFFECT (BANGLA) ---
 function playWelcomeVoice() {
     // "One X Giveaway Bangladesh-e apnake swagatom"
-    const text = "Welcome To 1X giveaway bangla dash"; 
+    const text = ""; 
     
     const speak = () => {
         const utterance = new SpeechSynthesisUtterance(text);
@@ -268,4 +268,5 @@ function playWelcomeVoice() {
 
     document.addEventListener('click', playOnInteraction);
     document.addEventListener('touchstart', playOnInteraction);
+
 }
